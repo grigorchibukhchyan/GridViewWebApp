@@ -1,0 +1,356 @@
+﻿@model GridViewWebApp.Models.AllModels
+
+@{
+    ViewData["Title"] = "Home Page";
+    List<ListOfStatus> listofStatus = ViewBag.ListOfStatus;
+    int pagenumber = 1;
+    if (!string.IsNullOrEmpty(Context.Request.Query["page"])) pagenumber = int.Parse(Context.Request.Query["page"]);
+
+    int itemsInPage = 20;
+    if (!string.IsNullOrEmpty(Context.Request.Query["itemsInPage"])) itemsInPage = int.Parse(Context.Request.Query["itemsInPage"]);
+
+    int SearchStatusID = 0;
+    if (!string.IsNullOrEmpty(Context.Request.Query["SearchStatusID"])) SearchStatusID = int.Parse(Context.Request.Query["SearchStatusID"]);
+}
+<style>
+    .detailImage {
+        max-width: 50px;
+        max-height: 50px;
+}
+</style>
+<script>
+    function PreviousClick() {
+        let urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('page')) {
+            var pageNumber = urlParams.get('page');
+            if (pageNumber > 1) {
+                urlParams.set('page', parseInt(pageNumber) - 1);
+                window.location = '?' + urlParams.toString();
+            }
+        }
+    }
+
+    function NextClick() {
+        let urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('page')) {
+            var nextPageNumber = parseInt(urlParams.get('page')) + 1;
+            if (nextPageNumber <= @ViewBag.PageSize) {
+                urlParams.set('page', nextPageNumber);
+                window.location = '?' + urlParams.toString();
+            }
+        }
+        else{
+            if (2 <= @ViewBag.PageSize) {
+                urlParams.set('page', 2);
+                window.location = '?' + urlParams.toString();
+            }
+        }
+    }
+
+    function OrderClick(value) {
+        let urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('sortBy')) {
+            var sortNumber = urlParams.get('sortBy');
+            if (sortNumber == value) {
+                if (urlParams.has('Asc')) {
+                    if (urlParams.get('Asc') == 'true')
+                    {
+                        urlParams.set('Asc', 'false');
+                    }
+                    else
+                    {
+                        urlParams.set('Asc', 'true');
+                    }
+                }
+            }
+            else
+            {
+                urlParams.set('sortBy', value);
+                urlParams.set('Asc', 'true');
+            }
+        }
+        else
+        {
+            urlParams.set('sortBy', value);
+            urlParams.set('Asc', 'true');
+        }
+        window.location = '?' + urlParams.toString();
+    }
+
+
+    
+</script>
+
+<div class="row">
+    <div class="col-lg-12 col-md-12">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th></th>
+                    Fields for searching
+                    <form asp-action="Index" method="get">
+
+                        <th>
+                        <label asp-for="Customers_View_List.First().FName" onclick="OrderClick(1)"></label><br />
+                        <input type="text" name="FName" value="@Context.Request.Query["FName"]" />
+                        </th>
+                        <th>
+                        <label asp-for="Customers_View_List.First().LName" onclick="OrderClick(2)"></label><br />
+                        <input type="text" name="LName" value="@Context.Request.Query["LName"]" />
+                        </th>
+                        <th>
+                        <label asp-for="Customers_View_List.First().StatusID" onclick="OrderClick(3)"></label><br />
+                        <select id="SearchStatusID" name="SearchStatusID">
+                                <option value="0"></option>
+                                @foreach (var item in listofStatus)
+                                {
+                                    <option value="@item.StatusID">@item.StatusName</option>
+                                }
+                            </select>
+                        </th>
+                        <th><label asp-for="Customers_View_List.First().Picture"></label></th>
+                    <th>Action<br /><input type="submit" value="Search" class="btn btn-primary" /></th>
+                    </form>
+                </tr>
+                <tr id="ShowHideRowAdderForm" style="display:none;">
+                    <form id="RowAdder" asp-action="Save" method="post" enctype="multipart/form-data" >
+                    <th>Fill all fields for adding</th>
+                    <th>
+                        <div class="form-group">
+                            <label asp-for="customer.FName"></label>
+                            <input asp-for="customer.FName" class="form-control" />
+                            <span asp-validation-for="customer.FName" class="text-danger"></span>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="form-group">
+                            <label asp-for="customer.LName"></label>
+                            <input asp-for="customer.LName" class="form-control" />
+                            <span asp-validation-for="customer.LName" class="text-danger"></span>
+                        </div>
+                    </th>
+                    <th>
+                        <select asp-for="customer.StatusID">
+                            @foreach (var item in listofStatus)
+                            {
+                                <option value="@item.StatusID">@item.StatusName</option>
+                            }
+                        </select>
+                    </th>
+                    <th>
+                        <div class="form-group">
+                            <label>Image:</label>
+                            <input type="file" name="file" class="form-control-file" id="ImageForAdding" />
+                        </div>
+                    </th>
+                        
+                    </form>
+
+                   
+                 
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    if (Model.Customers_View_List != null && Model.Customers_View_List.Count > 0)
+                    {
+                        foreach (var item in Model.Customers_View_List)
+                        {
+                            <tr data-rowid="@item.CustomerID">
+                                <th><input asp-for="@item.CustomerID" /></th>
+                                <th>
+                                    <span class="display-value">
+                                        @item.FName
+                                    </span>
+                                    <input type="text" asp-for="@item.FName" class="input-field fieldFname"  />
+                                </th>
+                                <th>
+                                    <span class="display-value">
+                                        @item.LName
+                                    </span>
+                                    <input type="text" asp-for="@item.LName" class="input-field fieldLname"  />
+                                </th>
+                                <th>
+                                    <span class="display-value">
+                                        @item.StatusName
+                                    </span>
+                                    <select asp-for="@item.StatusID" class="input-field fieldStatus">
+                                        @foreach (var statusitem in listofStatus)
+                                        {
+                                            <option value="@statusitem.StatusID">@statusitem.StatusName</option>
+                                        }
+                                    </select>
+                                </th>
+                                <th>
+                                    <img src="@item.Picture" class="detailImage display-value" />
+
+                                    <div class="form-group input-field">
+                                        <label>Image:</label>
+                                        <input type="file" name="file" class="form-control-file fieldPicture" required />
+                                    </div>
+                                </th>
+                                <th>
+                                    <button class="edit-button"><img src="/images/pen.svg" /></button>
+                                    <a href="/Home/Delete/@item.CustomerID"><img src="/images/trash.svg" class="delete-button" /></a>
+                                </th>
+                            </tr>
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+        <p>
+            <button onclick="PreviousClick()">«</button>
+            Page 
+            <input type="number" id="PageNumber" name="PageNumber" min="1" max="@ViewBag.PageSize" value="@pagenumber">
+            of @ViewBag.PageSize
+            <button onclick="NextClick()">»</button>
+            <select id="itemsInPage" name="itemsInPage">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
+
+        </p>
+        <div>
+            <!--<input type="submit" form="RowAdder" value="Save" id="save-button" />-->
+            <input type="submit" value="Save" id="save-button" />
+
+            <button id="add-button">
+                Add Row
+            </button>
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+    $(function () {
+        var getStatusID = @SearchStatusID;
+
+        $("#SearchStatusID > option").each(function () {
+            if (this.value == getStatusID) {
+                this.selected = 'selected';
+            }
+        });
+
+        var getitemsInPage = @itemsInPage;
+
+        $("#itemsInPage > option").each(function () {
+            if (this.value == getitemsInPage) {
+                this.selected = 'selected';
+            }
+        });
+
+
+        $('#itemsInPage').on('change', function () {
+            let urlParams = new URLSearchParams(window.location.search);
+          
+            if (urlParams.has('itemsInPage')) { urlParams.set('itemsInPage', $(this).val()) }
+            else { urlParams.append('itemsInPage', $(this).val() )}
+
+            window.location = '?' + urlParams.toString();
+        });
+
+        $("#PageNumber").on('change', function () {
+            var pgNumber = $("#PageNumber").val();
+            let urlParams = new URLSearchParams(window.location.search);
+
+            if (pgNumber > 0 && pgNumber <= @ViewBag.PageSize) {
+                urlParams.set('page', pgNumber);
+                window.location = '?' + urlParams.toString();
+            }
+        });
+
+        $('#save-button').hide();
+        $('.input-field').hide();
+
+        $('#add-button').click(function () {
+            $('.edit-button').hide();
+            $('.delete-button').hide();
+            $('#save-button').show();
+            $('#ShowHideRowAdderForm').toggle();
+            $('#add-button').hide();
+        });
+
+        $('.edit-button').click(function () {
+            $('#save-button').show();
+            $('#add-button').hide();
+
+            var row = $(this).closest('tr');
+            row.addClass('is-editing');
+            row.find('.display-value').hide();
+            row.find('.edit-button').hide();
+            row.find('.delete-button').hide();
+            row.find('.input-field').show();
+
+            var otherRows = $('tr').not(row);
+            otherRows.find('.edit-button').hide();
+            otherRows.find('.delete-button').hide();
+        });
+
+        $('#save-button').click(function () {
+            if ($('#ShowHideRowAdderForm').is(':hidden')) {
+                var row = $('.is-editing');
+                var rowid = row.data('rowid');
+                var fieldFname = row.find('.fieldFname').val();
+                var fieldLname = row.find('.fieldLname').val();
+                var fieldStatus = row.find('.fieldStatus').val();
+
+                var imageInput = row.find('.fieldPicture')[0];
+                var imageFile = imageInput.files[0];
+
+                var formData = new FormData();
+                formData.append('customerID', rowid);
+                formData.append('FName', fieldFname);
+                formData.append('LName', fieldLname);
+                formData.append('StatusID', fieldStatus);
+                formData.append('file', imageFile);
+
+                $.ajax({
+                    url: '@Url.Action("EditField", "Home")',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (redirect) {
+                        window.location = redirect;
+                    },
+                    error: function (xhr, status, error) {
+                        alert(error.Message);
+                    }
+                });
+            }
+            else{
+                var fieldValue = $('#customer_FName').val();
+
+                if (fieldValue == '') {
+                    alert('Fill First Name');
+                    return;
+                }
+
+                fieldValue = $('#customer_LName').val();
+
+                if (fieldValue == '') {
+                    alert('Fill Last Name');
+                    return;
+
+                }
+                
+                if ($('#ImageForAdding')[0].files.length <= 0) {
+                    alert('Add Image');
+                    return;
+                }
+
+                $('#RowAdder').submit();
+            }
+            
+
+        });
+
+
+    });
+</script>
